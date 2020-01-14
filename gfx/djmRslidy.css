@@ -1,0 +1,110 @@
+div.slide.titlepage {
+    text-align: center;
+    font-size: 150%;
+    padding-left: 0;
+    padding-top: 10%;
+}
+
+div.slide.titlepage h1 {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 5%;
+  color: #00AF64;
+}
+
+
+div.slide.titlepage {
+    font-variant: small-caps;
+}
+
+
+div.slide.titlepage title {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+div.slide.titlepage author {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+  
+}
+
+div.slide.titlepage date {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+
+div.slide h2{
+    text-align: right;
+    color: #00AF64;
+    font-variant: small-caps;
+}
+
+div.slide.section.level2 h1{
+    text-align: right;
+    color: #00AF64;
+    font-variant: small-caps;
+}
+
+div.slide {
+    font-family: Garamond, Times, serif;
+}
+
+
+
+div.titleslide h1 {
+  padding-left: 0;
+  padding-right: 20pt;
+  padding-top: 10%;
+  padding-bottom: 4pt;
+  margin-top: 100pt;
+  margin-left: 0;
+  margin-right: 60pt;
+  margin-bottom: 0.5em;
+  display: block; 
+  font-size: 200%;
+  line-height: 1.2em;
+  background: transparent;
+  color: #00AF64;
+  font-variant: small-caps;
+}
+
+div.slide.title-slide h1 {
+  padding-left: 0;
+  padding-right: 20pt;
+  padding-top: 10%;
+  padding-bottom: 4pt;
+  margin-top: 100pt;
+  margin-left: 0;
+  margin-right: 60pt;
+  margin-bottom: 0.5em;
+  display: block; 
+  font-size: 200%;
+  line-height: 1.2em;
+  background: transparent;
+  color: #00AF64;
+  font-variant: small-caps;
+}
+
+
+del
+{
+    text-decoration: none;
+    color: #ff9200;
+}
+
+
+/* blockquote */
+/* { */
+/*     font-style: italic; */
+/*     color: #ffffff; */
+/*     background-color: #00af64; */
+/* } */
+
+
+
