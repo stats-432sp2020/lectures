@@ -3,10 +3,10 @@ title: "Lecture 1"
 author: "DJM"
 date: "January 14, 2020"
 output:
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 ---
 
 ```{r setup, echo=FALSE}
@@ -285,18 +285,24 @@ git to use nano. If for some reason git asks you questions about doing things, j
 
 ## When you want to work on a file
 
-* You __pull__ the repo onto your local machine
-* Make all your changes
-* You __commit__ your changes with a message, e.g.: "I fixed the horrible bug"
-* You __push__ your changes back to the repo
+1. You __pull__ the repo onto your local machine
+1. Make some changes
+1. You __stage__ your changes by clicking the check boxes
+1. You __commit__ your changes with a message, e.g.: "I fixed the horrible bug"
+1. You continue to make changes + stage + commit with descriptive messages until you want to stop
+1. You __push__ your changes back to the remote repo
 
 ## The hard way 
 
-* You will do this practice, this once, using the terminal
-* If stuff gets messed up later, we can clean it up with the terminal
-* It's a little easier than in Rstudio to fix things
+Git is pretty complicated
 
-## The rest
+It is ~~very~~ versatile
+
+Hopefully you won't need much of the versatility in this class
+
+To use it, you need the command line or a better GUI client
+
+## The easy way
 
 * All the rest of the time, we'll just use Rstudio
 * You clone a repo using Rstudio, make your changes, and push using Rstudio
@@ -327,7 +333,3 @@ Now you don't need your passphrase (from this computer)
 
 ## In class assignment 1
 
-* Go to https://github.com/STATS-432Sp2020/class-roster
-* By noon tomorrow, complete steps 1 and 2
-* Read http://happygitwithr.com/index.html
-* Bring your laptop on Thursday (see me if you need an alternate solution)
