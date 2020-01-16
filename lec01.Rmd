@@ -7,6 +7,7 @@ output:
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
+    highlight: tango
 ---
 
 ```{r setup, echo=FALSE}
