@@ -3,10 +3,10 @@ title: "Lecture 1"
 author: "DJM"
 date: "January 14, 2020"
 output:
-  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 ---
 
 ```{r setup, echo=FALSE}
@@ -244,6 +244,14 @@ git --version
 
 * If it's there, you're done, otherwise...
 
+https://happygitwithr.com/install-git.html
+
+## Tongue in cheek details while we pause for installation
+
+```{r git-graph, echo=FALSE,fig.align='center'}
+include_graphics("gfx/git-graph.png")
+```
+
 
 ## Initial configuration
 
@@ -266,11 +274,6 @@ git to use nano. If for some reason git asks you questions about doing things, j
 * Rstudio has git built in, and so we'll use it through there mostly
 * Using the terminal gives access to more complicated issues, which hopefully we won't have to deal with.
 
-## Tongue in cheek details while we pause for installation
-
-```{r git-graph, echo=FALSE,fig.align='center'}
-include_graphics("gfx/git-graph.png")
-```
 
 ## Github
 
