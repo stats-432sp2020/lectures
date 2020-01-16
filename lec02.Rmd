@@ -1,13 +1,13 @@
 ---
 title: "Programming"
 author: "DJM"
-date: "January 21, 2020"
+date: "21 January 2020"
 output: 
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
     highlight: tango
-  pdf_document: default
 ---
 
 
