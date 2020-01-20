@@ -480,7 +480,7 @@ carried along as names in the output vector.
 predict(mob.lm2, newdata=mob[which(mob$State=="AL"),])
 ```
 
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 predict(mob.lm2, newdata = filter(mob, State == "AL"))
 ```
