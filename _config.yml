@@ -1,3 +1,5 @@
 theme: jekyll-theme-minimal
 title: S432 lecture slides
 logo: gfx/make-plots-1.png
+
+show_downloads: true
