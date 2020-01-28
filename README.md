@@ -13,3 +13,4 @@ Slides
 1. [Syllabus and github](lec01.html)
 1. [Programming](lec02.html)
 1. [Chapter 1](lec03.html)
+1. [Chapter 2](lec04.html)
