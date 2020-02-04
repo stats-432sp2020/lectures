@@ -3,11 +3,11 @@ title: "Chapter 2"
 author: "DJM"
 date: "4 February 2020"
 output:
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
     highlight: tango
-  pdf_document: default
 ---
 
 
@@ -176,4 +176,28 @@ g1
 ```{r what-r2, fig.align='center',fig.height=6,message=FALSE,warning=FALSE}
 g1
 df %>% group_by(grp) %>% summarise(rsq = summary(lm(y~x))$r.sq) %>% knitr::kable(digits = 2)
+```
+
+## Anscombe's quartet
+
+```{r anscombe}
+ans = anscombe %>%
+ pivot_longer(everything(),
+   names_to = c(".value", "set"),
+   names_pattern = "(.)(.)"
+ )
+ggplot(ans, aes(x,y)) + geom_point() + 
+  geom_smooth(method="lm",se=FALSE,color="blue") +
+  facet_wrap(~set, ncol=2) + theme_cowplot()
+```
+
+## Anscombe's quartet
+
+```{r anscombe-summary}
+ans %>% group_by(set) %>% 
+  summarise(
+    mx = mean(x), my = mean(y), sx = sd(x), sy = sd(y),
+    int = coef(lm(y~x))[1], slope = coef(lm(y~x))[2],
+    cor = cor(x,y), rsq = summary(lm(y~x))$r.sq) %>% 
+  knitr::kable(digits = 2)
 ```
