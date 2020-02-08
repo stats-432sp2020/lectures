@@ -3,11 +3,11 @@ title: "Chapter 3"
 author: "DJM"
 date: "11 February 2020"
 output:
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
     highlight: tango
-  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -818,6 +818,21 @@ cv.lm <- function(data, formulae, nfolds = 5) {
   }
   return(colMeans(mses))
 }
+```
+
+## Trick
+
+> __For nice models, one can show (after pages of tedious algebra which I wouldn't wish on my worst enemy, but might, in a fit of rage assign to a belligerant graduate student) that for $\widehat{Y} = HY$,__
+\[
+\mbox{LOO-CV} = \frac{1}{n} \sum_{i=1}^n \frac{(y_i -\widehat{y}_i)^2}{(1-w_{ii})^2} = \frac{1}{n} \sum_{i=1}^n \frac{\widehat{e}_i^2}{(1-h_{ii})^2}.
+\]
+
+* This trick means that you only have to fit the model once rather than $n$ times!
+
+* You still have to calculate this for each model!
+
+```{r}
+cv.lm <- function(mdl) mean((residuals(mdl)/(1-hatvalues(mdl)))^2)
 ```
 
 ## Over-fitting vs. Under-fitting
