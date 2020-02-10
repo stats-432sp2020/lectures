@@ -4,7 +4,7 @@ All lecture slides are available here for easy presentation.
 
 If you are looking for the source, click the download link to the left.
 
-Alternatively, `.pdf` handouts are linked on the [schedule](https://stats432-sp2020.github.io/schedule.html) page
+Alternatively, `.pdf` handouts are linked on the [schedule](https://stats-432sp2020.github.io/schedule.html) page
 
 ---
 
