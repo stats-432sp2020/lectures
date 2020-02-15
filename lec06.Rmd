@@ -1,12 +1,13 @@
 ---
 title: "Chapter 4"
 author: "DJM"
-date: "13 February 2017"
+date: "18 February 2020"
 output:
-  pdf_document: default
   slidy_presentation:
-    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    highlight: tango
+    css: gfx/djmRslidy.css
     font_adjustment: 0
+  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -18,9 +19,6 @@ output:
 \newcommand{\R}{\mathbb{R}}
 
 
-# Announcements
-
----
 
 ```{r setup, echo=FALSE}
 library(ggplot2)
@@ -30,11 +28,6 @@ blue = '#0B61A4'
 red = '#FF4900'
 orange = '#FF9200'
 ```
-
-1. Homework 3 is due __Tuesday__ 2/20 instead of Thursday 2/15.
-2. Exam 1 period is __Wednesday__ 2/21--__Wednesday 2/28 instead of Friday--Friday. (Still by 11:59pm)
-3. I will be out of town 2/21-2/23. You will have a substitute on 2/22.
-4. I will have extra office hours on 2/26 and 2/27.
 
 
 ## Workflow for doing statistics
