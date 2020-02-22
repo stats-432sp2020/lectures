@@ -16,3 +16,4 @@ Slides
 1. [Chapter 2](lec04.html)
 1. [Chapter 3](lec05.html)
 1. [Chapter 4](lec06.html)
+1. [Chapter 5 and 6](lec07.html)

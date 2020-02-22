@@ -453,7 +453,7 @@ tol = 1e-3
 grad <- function(x) 2*(x-6)
 for(iter in  1:maxiter){
   x.new = x - gam * grad(x)
-  conv = (x - x.new < tol)
+  conv = abs(x - x.new) < tol
   x = x.new
   if(conv) break
 }

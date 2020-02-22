@@ -1,0 +1,464 @@
+---
+title: "Chapter 5 and 6"
+author: "DJM"
+date: "25 February 2020"
+output:
+  slidy_presentation:
+    css: gfx/djmRslidy.css
+    font_adjustment: 0
+    highlight: tango
+  pdf_document: default
+---
+
+
+
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\newcommand{\E}{\mathbb{E}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+
+## Exam admonitions
+
+```{r setup, echo=FALSE, message=FALSE, results='hide'}
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+```
+
+0. You must compile the `.Rmd` to `.html`
+
+1. No code in the `html`. 
+  
+2. If you put plots or tables in, you must talk about them. 
+  
+  > Rule of thumb: if you don't have anything good to say about a number, don't give the number (or plot) at all.
+  
+3. __MOST IMPORTANT__ you must explain your results. Simply providing them is not likely to get you credit.
+
+4. Look over the model solutions for the last assignments. 
+
+## Project progress report
+
+* Due __8 March at 11:59 pm__ ( just over 2 weeks from today)
+
+* Your report should have 3 components:  
+
+    1. A list of teammate names and an explanation of what is interesting to you about this data.
+    2. A short introductory paragraph introducing the data and describing some potential questions you might investigate.
+    3. A lengthy exploratory data analysis.
+    
+* The third part is a big deal.
+
+* You need to provide evidence that you have explored the data carefully and meaningfully.
+
+* Code must be integrated.
+
+* Think of this like HW 2.
+
+* Just like with HW 2 and HW 3, much of what you do on the midterm will end up in the final report, so spend the time to do a good job.
+
+
+
+# Simulation
+
+
+
+## Why Simulation?
+
+* Up until now, when we do linear models, we used $t$-statistics, $p$-values, CIs
+
+* These things are based on the sampling distribution of the estimators ($\hat{\beta}$) if the model is true and we don't do any model selection.
+
+* What if we do model selection, use Kernels, think the model is wrong?
+
+* None of those formulas work. And analogous formulas can be __impossible__ (or painfully annoying) to derive.
+
+
+
+## Some simulation basics
+
+```{r}
+set.seed(2018-02-20)
+sample(1:10, replace=TRUE, prob=1:10/10)
+sample(letters[1:10], replace=TRUE, prob=1:10/10)
+sample(letters[1:10], replace=TRUE)
+sample(letters[1:10])
+```
+
+## Resampling data
+
+```{r, fig.align='center', fig.height=5}
+set.seed(2018-02-20)
+n = 100; x = runif(n)
+df = data.frame(x=x, y=3+2*x+rnorm(n))
+ggplot(df, aes(x,y)) + geom_point(color=blue,shape=17)
+```
+
+
+## A sample (with replacement), and a new draw from the same distribution
+
+```{r, fig.align='center', fig.height=5}
+resample <- function(df) {
+  stopifnot(is.data.frame(df) | is.matrix(df))
+  df[sample(1:nrow(df), replace = TRUE),]
+}
+df2 = resample(df)
+xn = runif(n)
+df3 = data.frame(x=xn, y=3+2*xn+rnorm(n))
+df = rbind(df,df2,df3)
+df$grp = rep(c('original','resample','new draw'), each=n)
+p <- ggplot(df, aes(x,y,color=grp)) + geom_point(aes(shape=grp)) +
+  scale_color_manual(values=c(red,blue,orange)) +
+  theme(legend.title = element_blank(),legend.position = 'bottom')
+p
+```
+
+## Add some lines
+
+```{r, fig.align='center', fig.height=5}
+p + geom_smooth(method='lm', se = FALSE)
+```
+
+## Using simulations to check modeling assumptions
+
+```{r, fig.align='center', fig.height=5}
+x = runif(n) - 0.5; y = 3+2*x + rnorm(n)*x^2
+dfHetero = data.frame(x=x, y=y)
+ggplot(dfHetero, aes(x,y)) + geom_point(color=blue,shape=17) +
+  geom_smooth(method='lm', se=FALSE,color=blue) + 
+  geom_abline(intercept = 3, slope=2, color=green)
+```
+
+## If the noise is homoskedastic...
+
+* The red and blue points should have the same distribution
+
+```{r, fig.align='center', fig.height=5}
+heteromod = lm(y~x,data=dfHetero)
+dfHetero$resids = residuals(heteromod)
+dfHetero$resample = sample(residuals(heteromod), replace = TRUE)
+dfHetero %>% gather(key='type', value='resids',-c(y,x)) %>% 
+  ggplot(aes(x,resids,color=type,shape=type)) + geom_point() + 
+  scale_color_manual(values=c(red,blue)) +
+  theme(legend.title = element_blank(),legend.position = 'bottom') +
+  geom_hline(yintercept=0, color=blue)
+```
+
+## That one was easy
+
+```{r, fig.align='center', fig.height=5}
+x = runif(n)-0.5
+y = 3+2*x + c(arima.sim(list(ar=.8), n, rand.gen = function(n) 0.1* rt(n, df=5)))
+dfTS = data.frame(x=x, y=y)
+ggplot(dfTS, aes(x,y)) + geom_point(color=blue) + 
+  geom_smooth(method='lm',se=FALSE, color=red) +
+  geom_abline(intercept = 3, slope = 2, color=blue)
+```
+
+## If the noise is homoskedastic...
+
+* The red and blue points should have the same distribution
+
+```{r, fig.align='center', fig.height=5}
+tsMod = lm(y~x, data=dfTS)
+dfTS$resids = residuals(tsMod)
+dfTS$resample = sample(residuals(tsMod), replace = TRUE)
+dfTS %>% gather(key='type', value='resids',-c(y,x)) %>% 
+  ggplot(aes(x,resids,color=type,shape=type)) + geom_point() + 
+  scale_color_manual(values=c(red,blue)) +
+  theme(legend.title = element_blank(),legend.position = 'bottom') +
+  geom_hline(yintercept=0, color=blue)
+```
+
+## But...
+
+```{r, fig.align='center', fig.height=5}
+lag.resids = with(dfTS, data.frame(lag.resids = resids[-n], resids = resids[-1]))
+lag.resids$resample = sample(lag.resids$resids, replace = TRUE)
+lag.resids %>% gather(key='type', value='resids',-lag.resids) %>% 
+  ggplot(aes(lag.resids,resids,color=type,shape=type)) + geom_point() + 
+  scale_color_manual(values=c(red,blue)) +
+  theme(legend.title = element_blank(),legend.position = 'bottom') +
+  geom_smooth(method='lm',se=FALSE)
+```
+
+
+## Another useful command
+
+```{r}
+sample.int(10)
+```
+
+## What's the deal with this Bootstrap?
+
+```{r}
+knitr::include_graphics("gfx/bootstraps.jpg")
+```
+
+## What's the deal with this Bootstrap?
+
+* Suppose I want to estimate something and get a CI.
+
+* But I don't know how to calculate the CI (or maybe I do, but it's hard)
+
+* Then what?
+
+## Example 1
+
+* Let $X_i\sim \chi_4^2$.
+
+* I know if I estimate the mean with $\bar{X}$, then by the CLT (if $n$ is big), 
+\[
+\frac{\sqrt{n}(\bar{X}-\Expect{X})}{s} \approx N(0, 1).
+\]
+
+* This gives me a 95% confidence interval like
+\[
+\bar{X} \pm 2*s/\sqrt{n}
+\]
+
+* But I don't want to estimate the mean, I want to estimate the median.
+
+```{r, fig.align='center', fig.height=4}
+ggplot(data.frame(x=c(0,12)), aes(x)) + 
+  stat_function(fun=function(x) dchisq(x, df=4), color=blue) +
+  geom_vline(xintercept = 4, color=blue) + # mean
+  geom_vline(xintercept = qchisq(.5,4), color=red) # median
+```
+
+## Now what
+
+```{r, echo=FALSE}
+n = 50
+```
+
+* I give you a sample of size `r n`, you give me the sample median.
+
+* How do you get a CI?
+
+* You can use the bootstrap!
+
+```{r, fig.align='center', fig.height=4}
+set.seed(2018-02-20)
+x = rchisq(n, 4)
+(med = median(x))
+B = 100
+alpha = 0.05
+bootMed <- function(x) median(sample(x, replace=TRUE))
+bootDist = replicate(B, bootMed(x))
+bootCI = 2* med - quantile(bootDist, probs = c(1-alpha/2, alpha/2))
+ggplot(data.frame(bootDist), aes(bootDist)) + geom_density(color=blue) +
+  geom_vline(xintercept = bootCI, col=blue, linetype=2) + 
+  geom_vline(xintercept = med, col=blue) + 
+  geom_vline(xintercept = qchisq(.5, 4), col=red) # truth
+```
+
+## An alternative
+
+* In that bootstrap, I didn't use any information about the data-generating process.
+
+* What if I told you that the data came from a $\chi^2$, but I didn't tell you the degrees of freedom?
+
+* You could try a "parametric" bootstrap:
+
+```{r, fig.align='center', fig.height=4}
+xbar = mean(x)
+s = sd(x)
+ParaBootSamp <- function(B, xbar, s){
+  means = rnorm(B, mean=xbar, sd=s/sqrt(n))
+  meds = qchisq(.5, means)
+  return(meds)
+}
+ParaBootDist = ParaBootSamp(B, xbar, s)
+ParaBootCI = 2* med - quantile(ParaBootDist, probs = c(1-alpha/2, alpha/2))
+ggplot(data.frame(bootDist), aes(ParaBootDist)) + geom_density(color=blue) +
+  geom_vline(xintercept = ParaBootCI, col=blue, linetype=2) + 
+  geom_vline(xintercept = med, col=blue) + 
+  geom_vline(xintercept = qchisq(.5, 4), col=red) # truth
+```
+
+## In truth
+
+* Let's compare these intervals
+
+* The nonparametric bootstrap (first one) had a width of
+```{r}
+bootCI[2] - bootCI[1]
+```
+
+* The parametric bootstrap (second one) had a width of
+```{r}
+ParaBootCI[2] - ParaBootCI[1]
+```
+
+* Using theory, we could find the exact CI. In this case, it has a width of 1.76.
+
+
+
+## Bootstrap diagram
+
+<center>![](gfx/boot1.png)</center>
+
+## Bootstrap intuition
+
+<center>![](gfx/boot2.png)</center>
+
+## Bootstrap error sources
+
+(From the bottom up on the last slide)
+
+1. Simulation error: using only $B$ samples to estimate $F$ with $\hat{F}$.
+
+2. Statistical error: our data depended on a sample from the population. We don't have the whole population so we make an error by using a sample (Note: this part is what __always__ happens with data, and what the science of statistics analyzes.)
+
+3. Specification error: If we use the model based bootstrap, and our model is wrong, then we think we are badly overconfident in our assessment of error. 
+
+## Recap
+
+* There are essentially 2 types of bootstrap
+    1. Parametric
+    2. Nonparametric
+    
+* If you __really__ believe your model, use the first
+
+* If not, use the second
+
+* Both are valid
+
+## Example 2 (using code from Book on new data)
+
+```{r, echo=FALSE}
+library(MASS)
+fatcats = cats
+fatcats$Hwt = fitted(lm(Hwt~Bwt, data=cats)) + rt(nrow(fatcats), 3)
+```
+
+```{r, fig.width=8, fig.height=6, fig.align='center', results='hide', warning=FALSE}
+library(MASS)
+ggplot(fatcats, aes(Bwt, Hwt)) + geom_point(color=blue)
+```
+
+## A model
+
+```{r}
+## Running the model on the original data
+cats.lm = lm(Hwt ~ 0+Bwt,data=fatcats)
+summary(cats.lm)
+confint(cats.lm)
+```
+
+## I think that that CI is wrong...
+
+```{r, fig.align='center', fig.width=7, fig.height=5}
+qqnorm(residuals(cats.lm))
+qqline(residuals(cats.lm))
+```
+
+## Functions to borrow
+
+```{r fcns-from-chapter}
+resample <- function(x) {
+    sample(x, replace = TRUE)
+}
+resample.data.frame <- function(data) {
+    sample.rows <- resample(1:nrow(data))
+    return(data[sample.rows, ])
+}
+rboot <- function(statistic, simulator, B) {
+    tboots <- replicate(B, statistic(simulator()))
+    if (is.null(dim(tboots))) {
+        tboots <- array(tboots, dim = c(1, B))
+    }
+    return(tboots)
+}
+bootstrap <- function(tboots, summarizer, ...) {
+    summaries <- apply(tboots, 1, summarizer, ...)
+    return(t(summaries))
+}
+equitails <- function(x, alpha) {
+    lower <- quantile(x, alpha/2)
+    upper <- quantile(x, 1 - alpha/2)
+    return(c(lower, upper))
+}
+bootstrap.ci <- function(statistic = NULL, simulator = NULL, tboots = NULL,
+    B = if (!is.null(tboots)) {
+        ncol(tboots)
+    }, t.hat, level) {
+    if (is.null(tboots)) {
+        stopifnot(!is.null(statistic))
+        stopifnot(!is.null(simulator))
+        stopifnot(!is.null(B))
+        tboots <- rboot(statistic, simulator, B)
+    }
+    alpha <- 1 - level
+    intervals <- bootstrap(tboots, summarizer = equitails, alpha = alpha)
+    upper <- t.hat + (t.hat - intervals[, 1])
+    lower <- t.hat + (t.hat - intervals[, 2])
+    CIs <- cbind(lower = lower, upper = upper)
+    return(CIs)
+}
+```
+
+## Model
+
+```{r fcns-to-create}
+## Simulator
+resamp.resids.cats <- function(){
+  resids = residuals(cats.lm)
+  newResids = sample(resids, replace=TRUE) 
+    # resample the residuals from the original model
+  newCats = data.frame(Bwt = fatcats$Bwt, 
+    Hwt=fitted(cats.lm) + newResids) # create a new dataframe 
+                                     # with the original x's but new y's
+  return(newCats)
+}
+## Estimator
+fitCats <- function(newCats) coef(lm(Hwt~0+Bwt, data=newCats)) # get the coef from OLS
+fitCats(fatcats) # test the above on original data, should give same coef
+```
+
+
+## Model-based bootstrap
+
+```{r, cache=TRUE, autodep=TRUE}
+cisPara = bootstrap.ci(statistic = fitCats,
+                       simulator = resamp.resids.cats,
+                       B = 1000, t.hat = fitCats(fatcats),
+                       level = 0.95)
+```
+
+## Nonparametric bootstrap
+
+```{r,cache=TRUE, autodep=TRUE}
+resamp.cats <- function() resample.data.frame(fatcats)
+cisNonPara = bootstrap.ci(statistic = fitCats,
+                          simulator = resamp.cats,
+                          B = 1000, t.hat = fitCats(fatcats),
+                          level = 0.95)
+  # use the prev func to 
+  # bootstrap on resampled data  
+cisPara
+cisNonPara
+```
+
+## Bootstrapping with nonparametric regression
+
+* This is a bit harder
+
+* The reason is that we use CV to choose the bandwidth
+
+* So we have to repeat that step in the bootstrapping
+
+* That is:  
+
+    1. Input data
+    1. Use CV to choose a smoothing parameter
+    2. Use the chosen parameter to estimate the smooth function
+    3. Resample the data
+    4. Using this new data, repeat 2 and 3
