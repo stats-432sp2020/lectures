@@ -1,0 +1,398 @@
+---
+title: "Chapter 8"
+author: "DJM"
+date: "2 March 2020"
+output:
+  pdf_document: default
+  slidy_presentation:
+    css: gfx/djmRslidy.css
+    font_adjustment: 0
+    highlight: tango
+---
+
+\newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Var}[1]{\mathbb{V}\left[ #1 \right]}
+\newcommand{\Cov}[2]{\mathrm{Cov}\left[#1,\ #2\right]}
+\newcommand{\given}{\ \vert\ }
+\newcommand{\E}{\mathbb{E}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\argmin}[1]{\underset{#1}{\textrm{argmin}}}
+\newcommand{\tr}[1]{\mbox{tr}(#1)}
+
+
+
+
+
+## Chapter 8
+
+```{r setup, echo=FALSE, results='hide',message=FALSE}
+# Need the knitr package to set chunk options
+library(knitr)
+# Set knitr options for knitting code into the report:
+# - Don't print out code (echo)
+# - Save results so that code blocks aren't re-run unless code changes (cache),
+# _or_ a relevant earlier code block changed (autodep), but don't re-run if the
+# only thing that changed was the comments (cache.comments)
+# - Don't clutter R output with messages or warnings (message, warning)
+  # This _will_ leave error messages showing up in the knitted report
+opts_chunk$set(message=FALSE, warning=FALSE, fig.align='center',fig.width=10,
+               fig.height=4,cache=TRUE, autodep=TRUE)
+options(show.signif.stars=FALSE)
+library(tidyverse)
+theme_set(theme_minimal(base_family="Times"))
+green = '#00AF64'
+blue = '#0B61A4'
+red = '#FF4900'
+orange = '#FF9200'
+```
+
+* Here we introduce the concept of GAMs ( __G__ eneralized __A__ dditive __M__ odels)
+
+* The basic idea is to imagine that the response is the sum of some functions of the predictors:
+\[
+\Expect{Y_i \given X_i=x_i} = \alpha + f_1(x_{i1})+\cdots+f_p(x_{ip}).
+\]
+
+* Note that OLS __is__ a GAM (take $f_j(x_{ij})=\beta_j x_{ij}$):
+\[
+\Expect{Y_i \given X_i=x_i} = \alpha + \beta_1 x_{i1}+\cdots+\beta_p x_{ip}.
+\]
+
+* The algorithm for fitting these things is called "backfitting":
+    
+    1. Center $Y$ and $X$.
+    2. Hold $f_k$ for all $k\neq j$ fixed, and regress $f_j$ on the partial residuals using your favorite smoother.
+    3. Repeat for $1\leq j\leq p$.
+    4. Repeat steps 2 and 3 until the estimated functions "stop moving" (iterate)
+    5. Return the results.
+    
+## Results
+
+* We will code it next time.
+
+* There are two `R` packages that do this for us. I find `mgcv` easier.
+
+* Let's look at a small example.
+
+```{r, fig.align='center',fig.width=10,fig.height=4,message=FALSE}
+library(mgcv)
+set.seed(03-02-2020)
+n = 500
+x1 = runif(n, 0, 2*pi)
+x2 = runif(n)
+y = 5 + 2*sin(x1) + 8*sqrt(x2)+rnorm(n,sd=.5)
+df = data.frame(y=y,x1=x1,x2=x2)
+```
+
+
+## Some plots
+
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+gather(df, predictor, x, -y) %>%
+  ggplot(aes(x=x,y=y)) + geom_point(col=blue) +
+  facet_wrap(~predictor,scales = 'free_x')
+```
+
+## Small example
+
+This just fits the linear model.
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+ex = gam(y~x1+x2, data=df)
+summary(ex)
+ggplot(data.frame(fitted=fitted(ex),resids=residuals(ex)), aes(fitted,resids))+
+  geom_point(color=blue) + geom_hline(yintercept = 0, color=red)
+```
+
+## Smoothing
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+ex.smooth = gam(y~s(x1)+s(x2), data=df) # Smooths each coordinate independently
+coefficients(ex.smooth) # still produces something
+plot(ex.smooth, pages = 1, scale=0, shade=TRUE, resid=TRUE, se=2, bty='n', las=1)
+```
+
+## Residuals vs. fitted
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+smoothdf = data.frame(fitted=fitted(ex.smooth),resids=residuals(ex.smooth), 
+                      mdl='original')
+ggplot(smoothdf, aes(fitted,resids))+
+  geom_point(color=blue) + geom_hline(yintercept = 0, color=red)
+```
+
+## Another version
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+ex.toosmooth = gam(y~s(x1,x2), data=df) # smooths together (like npreg)
+coefficients(ex.toosmooth) # still produces something
+plot(ex.toosmooth, pages = 1, scale=0, shade=TRUE, resid=TRUE, se=2, bty='n', las=1)
+```
+
+## Residuals vs. fitted (not too different)
+
+```{r, fig.align='center',fig.width=10,fig.height=4}
+rbind(smoothdf, 
+      data.frame(fitted=fitted(ex.toosmooth),resids=residuals(ex.toosmooth), 
+                      mdl='too smooth')) %>% 
+  ggplot(aes(fitted,resids,color=mdl)) + geom_point() +
+  scale_color_manual(values=c(blue,green)) + 
+  geom_hline(yintercept = 0, color=red)
+```
+
+
+## Redoing the example in the text
+
+```{r, load-data}
+housing <- read.csv("http://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/data/calif_penn_2011.csv") # load the data from the web
+housing <- na.omit(housing) # removes any row with an NA
+calif <- filter(housing, STATEFP==6) # gets the california data
+```
+
+## Linear model
+
+```{r, lin-model}
+calif.lm <- lm(log(Median_house_value) ~ Median_household_income
+  + Mean_household_income + POPULATION + Total_units + Vacant_units + Owners
+  + Median_rooms + Mean_household_size_owners + Mean_household_size_renters
+  + LATITUDE + LONGITUDE, data = calif) # why this model and not another?
+print(summary(calif.lm), signif.stars=FALSE, digits = 3) # less annoying output
+```
+
+## Some model evaluation
+
+Note: Some differences from text to demonstrate `tidyverse`
+
+```{r, lin-model-eval}
+round(sqrt(mean(residuals(calif.lm)^2)),3) # how big are our errors (on log scale)
+round(exp(sqrt(mean(residuals(calif.lm)^2)))-1,3) # on the actual scale
+preds.lm.all = predict(calif.lm, se.fit=TRUE, interval = 'prediction')
+# The `preds.lm.all$fit` object contains lwr and upr limits, but won't for gam
+# to match, we recalculate
+preds.lm = data.frame(
+  obs.value = calif$Median_house_value, 
+  fit = preds.lm.all$fit[,1],
+  fit.se = preds.lm.all$se.fit)
+sigma.lm = summary(calif.lm)$sigma
+preds.lm = preds.lm %>% mutate(
+  lwr = fit - 2*sqrt(fit.se^2 + sigma.lm^2), # remember this formula???
+  upr = fit + 2*sqrt(fit.se^2 + sigma.lm^2), # remember this formula???
+  captured = (log(obs.value) <= upr) & (log(obs.value) >= lwr)
+  )
+mean(preds.lm$captured)# percentage of actual observations inside the CI
+round(median(preds.lm.all$se.fit),3) # median size of the pred SEs (log scale)
+round(exp(median(preds.lm.all$se.fit))-1,3) # percent in $
+```
+
+## Plot our predictions
+
+This part is modified to use `ggplot`. See the text for an alternative.
+
+```{r, lin-pred-plots,fig.width=10, fig.height=4} 
+plm <- preds.lm %>%
+  ggplot(aes(x=obs.value,y=exp(fit),color=captured)) + 
+  geom_errorbar(aes(ymin=exp(lwr), ymax=exp(upr)), width=.1,color='grey') + 
+  geom_point(size=.1) + geom_abline(slope=1, intercept = 0, color=green) + 
+  scale_color_manual(values=c(red,blue)) +
+  xlab('Actual price ($)') + ylab('Predicted ($)') + ggtitle('Linear model')
+plm
+```
+
+## Zoom in on the bad part
+
+```{r, lin-pred-plot2, fig.width=10, fig.height=4} 
+plm + coord_cartesian(xlim=c(0,2e5) , ylim=c(0,4e5))
+```
+
+## The GAM
+
+```{r, estim-gam}
+calif.gam <- gam(log(Median_house_value)
+  ~ s(Median_household_income) + s(Mean_household_income) + s(POPULATION)
+  + s(Total_units) + s(Vacant_units) + s(Owners) + s(Median_rooms)
+  + s(Mean_household_size_owners) + s(Mean_household_size_renters)
+  + s(LATITUDE) + s(LONGITUDE), data=calif) # just put 's( )' around everything
+round(sqrt(mean(residuals(calif.gam)^2)),3) # how big are our errors (on log scale),  
+  # doing better (in sample) than before
+round(exp(sqrt(mean(residuals(calif.gam)^2)))-1,3) # on the actual scale
+preds.gam.all = predict(calif.gam, se.fit=TRUE) # no interval here
+preds.gam = data.frame(
+  obs.value = calif$Median_house_value, 
+  fit = preds.gam.all$fit,
+  fit.se = preds.gam.all$se.fit)
+sigma.gam = sqrt(calif.gam$sig2) # annoyingly in a different place
+preds.gam = preds.gam %>% mutate(
+  lwr = fit - 2*sqrt(fit.se^2 + sigma.gam^2), 
+  upr = fit + 2*sqrt(fit.se^2 + sigma.gam^2), 
+  captured = (log(obs.value) <= upr) & (log(obs.value) >= lwr)
+  )
+mean(preds.gam$captured)# percentage of actual observations inside the CI
+round(median(preds.gam.all$se.fit),3) # median size of the pred SEs (log scale)
+round(exp(median(preds.gam.all$se.fit))-1,3) # percent in $, not as precise as before,
+  # recognizing uncertainty 
+```
+
+
+## Evaluating
+
+Our plot again, but for the gam
+
+```{r, gam-preds, fig.width=10, fig.height=4} 
+pgam <- preds.gam %>%
+  ggplot(aes(x=obs.value,y=exp(fit),color=captured)) + 
+  geom_errorbar(aes(ymin=exp(lwr), ymax=exp(upr)), width=.1,color='grey') + 
+  geom_point(size=.1) + geom_abline(slope=1, intercept = 0, color=green) + 
+  scale_color_manual(values=c(red,blue)) +
+  xlab('Actual price ($)') + ylab('Predicted ($)') + ggtitle('Additive model')
+pgam
+```
+
+## Zooming...
+
+```{r, gam-pred-plot2, fig.width=10, fig.height=4} 
+pgam + coord_cartesian(xlim=c(0,2e5), ylim=c(0,4e5))
+```
+
+## Partial response functions
+
+```{r, gam1-prf,fig.height=12}
+plot(calif.gam, pages = 1, scale=0, shade=TRUE, resid=TRUE, se=2, bty='n', las=1)
+```
+
+## Partial response functions, take 2
+
+```{r, gam1-prf2,fig.height=12}
+plot(calif.gam, pages = 1, scale=0, shade=TRUE, se=2, bty='n', las=1)
+```
+
+## Do it again, a bit differently
+
+```{r, gam2}
+calif.gam2 <- gam(log(Median_house_value)
+  ~ s(Median_household_income) + s(Mean_household_income) + s(POPULATION)
+  + s(Total_units) + s(Vacant_units) + s(Owners) + s(Median_rooms)
+  + s(Mean_household_size_owners) + s(Mean_household_size_renters)
+  + s(LONGITUDE,LATITUDE), data=calif) 
+  # does fully nonparametric regression on Long and Lat
+
+round(exp(sqrt(mean(residuals(calif.gam2)^2)))-1,3) # on the actual scale
+preds.gam.all2 = predict(calif.gam, se.fit=TRUE) # no interval here
+preds.gam2 = data.frame(
+  obs.value = calif$Median_house_value, 
+  fit = preds.gam.all2$fit,
+  fit.se = preds.gam.all2$se.fit)
+sigma.gam2 = sqrt(calif.gam2$sig2) # annoyingly in a different place
+preds.gam2 = preds.gam2 %>% mutate(
+  lwr = fit - 2*sqrt(fit.se^2 + sigma.gam2^2), 
+  upr = fit + 2*sqrt(fit.se^2 + sigma.gam2^2), 
+  captured = (log(obs.value) <= upr) & (log(obs.value) >= lwr)
+  )
+mean(preds.gam2$captured)# percentage of actual observations inside the CI
+```
+
+## Another partial response plot
+
+```{r, gam2-prf,fig.height=12}
+plot(calif.gam2, pages = 1, scale=0, shade=TRUE, se=2, bty='n', las=1)
+```
+
+## Zoom in on the interaction of Lat. and Long.
+
+```{r, gam2-wireframe,fig.height=12}
+plot(calif.gam2,select=10,phi=60,pers=TRUE,ticktype="detailed",cex.axis=0.5)
+```
+
+## A different version
+
+```{r, gam2-contour, fig.height=12}
+plot(calif.gam2,select=10,scheme=2,se=FALSE)
+```
+
+## Drawing maps with colored points
+
+This is __much__ different from the text (easier)
+
+```{r predict-map, fig.height=10}
+library(viridis) # good color scales
+dfpreds = data.frame(obs = calif$Median_house_value,
+                     lm = exp(preds.lm$fit),
+                     gam1 = exp(preds.gam$fit),
+                     gam2 = exp(preds.gam2$fit),
+                     long = calif$LONGITUDE,
+                     lat = calif$LATITUDE)
+dflong = dfpreds %>% gather('model','price',-c(long,lat))
+ggplot(dflong, aes(x=long,y=lat,color=price)) + geom_point() + 
+  facet_wrap(~model,nrow = 2) + coord_map() + 
+  borders('state','california') +
+  scale_color_viridis(option = 'magma', direction=-1)
+```
+
+These look terrible. The scaling isn't very good.
+
+## Some modifications
+
+```{r predict-map2, fig.height=10}
+nclasses = 8
+dflong = dflong %>% mutate(brks = cut_number(price, nclasses)) 
+ggplot(dflong, aes(x=long,y=lat,color=brks)) + geom_point() + 
+  facet_wrap(~model,nrow = 2) + coord_map() + 
+  borders('state','california') +
+  scale_color_viridis(discrete=TRUE, option = 'magma', direction=-1)
+```
+
+Much better, but the legend is ugly. And probably too many classes.
+
+## Final version
+
+```{r predict-map-final, fig.height=10}
+nclasses = 6
+dflong = dflong %>% mutate(brks = cut_number(price, nclasses))
+# A trick I found in ?cut
+labs = levels(dflong$brks)
+the.nums = cbind(lower = as.numeric( sub("\\((.+),.*", "\\1", labs) ),
+      upper = as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", labs) ))
+# There's a warning here for the lowest level, we ignore it
+new.labs = c('<', the.nums[-c(1,nclasses), 2], '>')
+levels(dflong$brks) = new.labs
+ggplot(dflong, aes(x=long,y=lat,color=brks)) + geom_point() + 
+  facet_wrap(~model,nrow = 2) + coord_map() + 
+  borders('state','california') +
+  scale_color_viridis(discrete=TRUE, option = 'inferno', direction=-1,
+                      guide = guide_legend(title='House price ($)')) +
+  theme( # kill off annoying annotation
+    axis.line = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank())
+```
+
+
+
+## Maps of errors
+
+```{r, fig.height=10}
+dferrs = dfpreds %>% mutate(lm = obs-lm,
+                            gam1 = obs-gam1,
+                            gam2 = obs-gam2)
+dflong2 = dferrs %>% gather('model','resids',-c(long,lat,obs))
+ggplot(dflong2, aes(x=long, y=lat,
+                    color=sign(resids)*(abs(resids))^(1/2))) + 
+  # Makes it easier to see the color. Not meaningful
+  geom_point() + 
+  facet_wrap(~model,nrow = 2) + coord_map() + 
+  borders('state','california') +
+  scale_color_gradient2(midpoint=0, mid='white', low=red, high=blue,
+                        guide=guide_colorbar(title='Scaled residuals')) +
+  theme( # kill off annoying annotation
+    axis.line = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank())
+```
+
