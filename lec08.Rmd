@@ -3,11 +3,10 @@ title: "Chapter 8"
 author: "DJM"
 date: "2 March 2020"
 output:
-  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
-    highlight: tango
+  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -40,7 +39,8 @@ opts_chunk$set(message=FALSE, warning=FALSE, fig.align='center',fig.width=10,
                fig.height=4,cache=TRUE, autodep=TRUE)
 options(show.signif.stars=FALSE)
 library(tidyverse)
-theme_set(theme_minimal(base_family="Times"))
+library(cowplot)
+theme_set(theme_cowplot(20))
 green = '#00AF64'
 blue = '#0B61A4'
 red = '#FF4900'
@@ -148,7 +148,7 @@ rbind(smoothdf,
 ```{r, load-data}
 housing <- read.csv("http://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/data/calif_penn_2011.csv") # load the data from the web
 housing <- na.omit(housing) # removes any row with an NA
-calif <- filter(housing, STATEFP==6) # gets the california data
+calif <- dplyr::filter(housing, STATEFP==6) # gets the california data
 ```
 
 ## Linear model
