@@ -3,10 +3,10 @@ title: "Chapter 8"
 author: "DJM"
 date: "2 March 2020"
 output:
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
-  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -395,4 +395,99 @@ ggplot(dflong2, aes(x=long, y=lat,
     axis.title.x = element_blank(),
     axis.title.y = element_blank())
 ```
+
+## Interpreting predictive models
+
+* Suppose we use `lm`. How do we interpret $\hat{\beta}_1$? Why?
+
+* Suppose we use `npreg`. How do we interpret those figures from `plot(mod.np)`? Why?
+
+* Suppose we use `gam`. How do we interpret those figures from `plot(ex.smooth)`? Why?
+
+* What is that weird plot you made at the end of the midterm?
+
+## GAMs again
+
+
+* The basic idea is to imagine that the response is the sum of some functions of the predictors:
+\[
+\Expect{Y_i \given X_i=x_i} = \alpha + f_1(x_{i1})+\cdots+f_p(x_{ip}).
+\]
+
+* Note that OLS __is__ a GAM (take $f_j(x_{ij})=\beta_j x_{ij}$):
+\[
+\Expect{Y_i \given X_i=x_i} = \alpha + \beta_1 x_{i1}+\cdots+\beta_p x_{ip}.
+\]
+
+* The algorithm for fitting these things is called "backfitting":
+    
+    1. Center $Y$ and $X$.
+    2. Hold $f_k$ for all $k\neq j$ fixed, and regress $f_j$ on the partial residuals using your favorite smoother.
+    3. Repeat for $1\leq j\leq p$.
+    4. Repeat steps 2 and 3 until the estimated functions "stop moving" (iterate)
+    5. Return the results.
+
+
+## The code
+
+```{r}
+backfitlm <- function(y, X, intercept = TRUE, max.iter=100, small.enough=1e-6, track=FALSE){
+  # This function performs linear regression by "backfitting" 
+  # Inputs: y - the response
+  #         X - the design matrix (assumes no intercept, if intercept, add column of ones)
+  #         max.iter - the maximum number of loops through the predictors (default to 100)
+  #         small.enough - if the mse changes by less than this, terminate (default to 1e-6)
+  #         track - do we print how far we've gotten? (default to "no")
+  X = as.matrix(X) 
+  p = ncol(X) # how many covariates?
+  n = nrow(X) # how many observations
+  if(intercept && any(abs(X[,1] - 1)>1e-16)){
+    X = cbind(1,X)
+    p = p + 1
+  }
+  betas = double(p) # create a vector for our estimated coefficients (all zeros now)
+  preds = matrix(0, n, p) # a matrix to hold the partial predictions of each covariate
+  pres = matrix(y, n, p) # partial residuals begin as y (since we are predicting with 0)
+  iter = 0 # initialize our iteration
+  mse = mean(y^2) # initialize the MSE to SSTo
+  conv = FALSE # initialize the convergence check to FALSE
+  while(!conv && (iter < max.iter)){ # enter the loop, check conditions (note && not &)
+    iter = iter + 1 # update the iteration count
+    for(j in 1:p){ # loop over all predictors
+      pres[,j] = y - rowSums(preds[,-j]) # partial residuals (ignoring current predictor)
+      ## same as X[,-j] %*% betas[-j], same as apply(preds[,-j],1,sum)
+      mod = lm(pres[,j] ~ X[,j]-1) # regress current predictor on partial residuals, no intercept, if gam, remove
+      ## mod = gam(pres[,j]~X[,j]) # if we want a gam instead
+      betas[j] = coefficients(mod) # get out the single coefficient, if gam, remove this line
+      preds[,j] = fitted(mod) # update the predictions from this column
+    }
+    msenew = sqrt(mean((y - rowSums(preds)))^2) # get the updated MSE after a pass
+    conv = (abs(mse-msenew)<small.enough) # check how different our MSE was from previous
+    mse = msenew # save the new MSE
+    if(track) cat(iter/max.iter, " mse = ", mse, "\n")
+  }
+  return(list(bhat=betas, pres=pres, preds = preds, mse=mse)) # return our coefficients
+}
+```
+
+
+## Testing...
+
+* Generate a design matrix $X$ with 100 observations and $p=10$ covariates and a response variable $y$ using a linear model. 
+
+* Test the (now complete) `backfitlm` on this data and compare the results to `lm`. Should there be an intercept in either version?
+
+```{r}
+set.seed(03052020)
+n = 100
+p = 10
+X = matrix(runif(n*p,-1,1), n)
+b = 10:1 # true betas
+y = X %*% b + rnorm(n, sd=.5)
+bhat.lm = coef(lm(y~X-1)) # no intercept
+bhat.bf = backfitlm(y,X,intercept = FALSE)$bhat # also no intercept
+round(rbind(bhat.lm,bhat.bf),3)
+```
+
+Notice that the estimated coefficients are exactly the same. I didn't generate data with an intercept, so I didn't let `lm` estimate one. You could have though.
 
