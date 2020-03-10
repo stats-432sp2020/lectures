@@ -345,12 +345,15 @@ n = 100
 x = 1:n/n*2*pi
 df = data.frame(x = x,
                  y = trueFunction(x) + rnorm(n, 0, .75))
+```
+
+```{r, echo=TRUE, fig.height = 4, fig.align='center', fig.width=8, results='hide', message=FALSE}
 kern = npreg(y~x, data = df)
 loclin = npreg(y~x, data=df, regtype='ll')
 df$kern = fitted(kern)
 df$loclin = fitted(loclin)
 df$truth = trueFunction(x)
-dflines = gather(select(df,-y),key='method',value='value',-x)
+dflines = pivot_longer(select(df,-y),-x, names_to = 'method')
 ggplot(df, aes(x, y)) + geom_point() + xlim(0,2*pi) + ylim(0,max(df$y)) +
   geom_line(data=dflines, aes(x=x,y=value,color=method)) + 
   scale_color_manual(values=c(green,blue,red))
@@ -371,10 +374,10 @@ ggplot(df, aes(x, y)) + geom_point() + xlim(0,2*pi) + ylim(0,max(df$y)) +
 
 * Here it is on my previous example
 
-```{r}
+```{r, echo=TRUE}
 ls = loess(y~x, data=df)
 df$loess = fitted(ls)
-dflines = gather(select(df,-y),key='method',value='value',-x)
+dflines = pivot_longer(select(df,-y),-x,names_to='method')
 ggplot(df, aes(x, y)) + geom_point() + xlim(0,2*pi) + ylim(0,max(df$y)) +
   geom_line(data=dflines, aes(x=x,y=value,color=method)) + 
   scale_color_manual(values=c(green,blue,red,orange))
