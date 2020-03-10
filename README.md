@@ -18,3 +18,4 @@ Slides
 1. [Chapter 4](lec06.html)
 1. [Chapter 5 and 6](lec07.html)
 1. [Chapter 8](lec08.html)
+1. [Chapter 10](lec09.html)
