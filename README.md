@@ -19,3 +19,8 @@ Slides
 1. [Chapter 5 and 6](lec07.html)
 1. [Chapter 8](lec08.html)
 1. [Chapter 10](lec09.html)
+1. [Chapter 11.1--11.3](lec10.html)
+1. [Chapter 11.4--12](lec11.html)
+1. [ISL 4](lec12.html)
+1. [Chapter 13 and ISL 8](lec13.html)
+1. [ISL 6](lec14.html)
