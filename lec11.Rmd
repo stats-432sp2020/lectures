@@ -3,11 +3,11 @@ title: "Chapter 11.4--12"
 author: "DJM"
 date: "7 April 2020"
 output:
+  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
     highlight: tango
-  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -235,6 +235,8 @@ plot.logistic(x,y.logit,glm.logit,main='GLM coefs')
 plot.logistic(x,y.logit,our.logit,main='Our coefs',col='darkgreen')
 ```
 
+# Ordinal logistic regression
+
 ## O-logit
 
 * A study looks at factors that influence the decision of whether to apply to graduate school. 
@@ -364,6 +366,8 @@ plot(density(delta.dev.dist), las=1, bty='n')
 abline(v=delta.observed, col=2)
 ```
 
+# Real research example: Poisson regression
+
 ## Poisson regression
 
 ```{r fig.width=10, fig.height=8,echo=FALSE}
@@ -486,7 +490,7 @@ df = filter(df, grepl('cont',coef)) %>% mutate(coef = substring(coef, 5)) %>%
 ggplot(df, aes(coef, value, color=drink_type)) + 
   geom_errorbar(aes(ymax=high,ymin=low)) +
   geom_point(size=2) + facet_wrap(~name) + 
-  xlab('treatment') + ylab('% increase in sales') +
-  scale_color_viridis_d() + theme_cowplot() +
+  xlab('treatment type') + ylab('% increase in sales') +
+  scale_color_manual(values = c(blue,orange)) + theme_cowplot() +
   theme(legend.position='bottom', legend.title=element_blank())
 ```
