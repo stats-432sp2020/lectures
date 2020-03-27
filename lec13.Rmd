@@ -1,11 +1,12 @@
 ---
 title: "Trees and Forests: AEPV 13, ISL 8"
 author: "DJM"
-date: "10 April 2018"
+date: "21 April 2020"
 output:
   slidy_presentation:
-    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    css: gfx/djmRslidy.css
     font_adjustment: 0
+    highlight: tango
   pdf_document: default
 ---
 
@@ -24,8 +25,7 @@ library(knitr)
 opts_chunk$set(message=FALSE, warning=FALSE, fig.align='center',fig.width=10,
                fig.height=6, cache=TRUE, autodep = TRUE)
 library(tidyverse)
-library(data.table)
-theme_set(theme_minimal(base_family="Times"))
+library(cowplot)
 green = '#00AF64'
 blue = '#0B61A4'
 red = '#FF4900'
@@ -517,14 +517,14 @@ fun = function(x) table(x$class, x$truth)
 library(kableExtra)
 tab = plyr::ddply(long, ~predictor, fun)
 tab$prediction = c(0,1,0,0,1,0,1)
-kable(tab[,c(4,2,3)], 'html') %>% group_rows('bagging', 1,2) %>% 
+kable(tab[,c(4,2,3)]) %>% group_rows('bagging', 1,2) %>% 
   group_rows('null', 3,3) %>%
   group_rows('random forest',4,5) %>% group_rows('tree',6,7)
 ```
 
 ## Tree results: Sensitivity and Specificity
 
-```{r}
+```{r, eval=FALSE}
 sense = function(pred,truth){
   mat = table(pred,truth)[,2]
   mat[2]/sum(mat)
@@ -575,7 +575,7 @@ Each time a tree is grown, we can get its prediction error on the unused observa
 ```{r}
 tab = table(predict(bag),recessions$y[train])
 kable(tab)
-sum(diag(tab))/sum(tab)
+1-sum(diag(tab))/sum(tab)
 ```
 
 
