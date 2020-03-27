@@ -3,11 +3,11 @@ title: "Chapter 11.1--11.3"
 author: "DJM"
 date: "31 March 2020"
 output:
-  pdf_document: default
   slidy_presentation:
     css: gfx/djmRslidy.css
     font_adjustment: 0
     highlight: tango
+  pdf_document: default
 ---
 
 

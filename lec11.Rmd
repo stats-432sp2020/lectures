@@ -1,12 +1,13 @@
 ---
-title: "Chapter 12"
+title: "Chapter 11.4--12"
 author: "DJM"
-date: "27 March 2018"
+date: "7 April 2020"
 output:
-  pdf_document: default
   slidy_presentation:
-    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    css: gfx/djmRslidy.css
     font_adjustment: 0
+    highlight: tango
+  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -24,7 +25,7 @@ output:
 
 ## Generalized linear models
 
-```{r setup, echo=FALSE}
+```{r setup, echo=FALSE,message=FALSE}
 # Need the knitr package to set chunk options
 library(knitr)
 # Set knitr options for knitting code into the report:
@@ -36,8 +37,7 @@ library(knitr)
   # This _will_ leave error messages showing up in the knitted report
 opts_chunk$set(message=FALSE, warning=FALSE, fig.align='center',fig.width=8,
                fig.height=4,cache=TRUE,autodep=TRUE)
-library(ggplot2)
-theme_set(theme_minimal(base_family="Times"))
+library(tidyverse)
 green = '#00AF64'
 blue = '#0B61A4'
 red = '#FF4900'
@@ -108,7 +108,7 @@ g(Y) \approx g(\mu(x)) + (Y-\mu(x))g'(\mu(x)) =:Z
 
 ## Why do this?
 
-* If $Y$ is binary (is either 0 or 1), than transforming $g(Y) = log\frac{Y}{1-Y}$ doesn't help
+* If $Y$ is binary (is either 0 or 1), than transforming $g(Y) = \log\frac{Y}{1-Y}$ doesn't help
 
 * For that $g$, $g(Y) = \pm \infty$.
 
@@ -261,11 +261,12 @@ c(summary(dat$gpa), sd=sd(dat$gpa))
 ## Plotting
 
 ```{r, fig.width=12, fig.height=8}
+library(cowplot)
 ggplot(dat, aes(x = apply, y = gpa)) +
   geom_boxplot(size = .75) +
   geom_jitter(alpha = .5) +
-  facet_grid(pared ~ public, margins = TRUE) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  facet_grid(pared ~ public, margins = TRUE, labeller = label_both) + theme_cowplot() +
+  coord_flip()
 ```
 
 ## Do the estimation
@@ -296,7 +297,7 @@ confint(m) # this does "profiled" confidence intervals using numerical informati
 confint.default(m) # this assumes normality, are they very different? (the first is preferred)
 ```
 
-* Interpret the coefficient for 'pared' in context (this is a logistic regression, it uses log odds)
+* Interpret the coefficient for `pared` in context (this is a logistic regression, it uses log odds)
 
 ## Odds ratios
 
@@ -375,7 +376,7 @@ img <- readPNG("gfx/pm.png")
 ## The study
 
 ```{r, echo=FALSE}
-soda = read.csv('gfx/sodas.csv')
+soda = read_csv('gfx/sodas.csv')
 ```
 
 * Examining how many sugary drinks were sold in hospital cafeterias
@@ -396,11 +397,12 @@ soda = read.csv('gfx/sodas.csv')
 ## Data processing
 
 ```{r}
-soda$DofW = factor(soda$DofW, labels = c('Mon','Tue','Wed','Thur','Fri','Sat','Sun'))
-soda$cont = soda$Intervention
-levels(soda$cont)[6:7] = 'control'
-soda$cont = relevel(soda$cont, ref='control') # makes 'control' the baseline
-soda = subset(soda, soda$DofW %in% c('Mon','Tue','Wed','Thur','Fri')) # remove weekends
+soda = soda %>% mutate(
+  DofW = factor(DofW, labels = c('Mon','Tue','Wed','Thur','Fri','Sat','Sun')),
+  cont = fct_collapse(factor(Intervention), control = c('follow','preint')) %>% 
+                        fct_relevel('control') # makes 'control' the baseline
+) 
+soda = filter(soda, DofW %in% c('Mon','Tue','Wed','Thur','Fri')) # remove weekends
 ```
 
     
@@ -447,36 +449,44 @@ p(y\given X=x) = \frac{\lambda(x)^y \exp(-\lambda(x))}{y!}I(y\in \mathbb{Z}^+) =
 * Do it separately for each site
 
 ```{r}
-require(plyr)
-sugary = dlply(soda, .(Site), glm, formula=Regular~DofW+cont+offset(log(CosTot)),
-               family='quasipoisson')
-zerocal = dlply(soda, .(Site), glm, formula=ZeroCal~DofW+cont+offset(log(CosTot)),
-                family='quasipoisson')
-signif(cbind(sapply(sugary,coef),sapply(zerocal,coef)),3)
+sugary = soda %>% group_by(Site) %>% 
+  do(mod=glm(Regular~DofW + cont + offset(log(CosTot)), family='quasipoisson', data=.))
+zerocal = soda %>% group_by(Site) %>% 
+  do(mod=glm(ZeroCal~DofW + cont + offset(log(CosTot)), family='quasipoisson', data=.))
+sugary_coef = sapply(sugary$mod, coef)
+colnames(sugary_coef) = sugary$Site
+sugary_coef = as_tibble(sugary_coef, rownames='coef')
+zerocal_coef = sapply(zerocal$mod, coef)
+colnames(zerocal_coef) = zerocal$Site
+zerocal_coef = as_tibble(zerocal_coef, rownames='coef')
+kable(sugary_coef, digits = 2)
+kable(zerocal_coef, digits = 2)
 ```
 
 ## Transformed back (as percentage changes)
 
 ```{r}
-signif((exp(cbind(sapply(sugary,coef),sapply(zerocal,coef)))-1)*100,3)
+to_perc <- function(x) (exp(x)-1)*100
+mutate_if(sugary_coef,is.numeric,to_perc) %>% kable(digits=2)
+mutate_if(zerocal_coef,is.numeric,to_perc) %>% kable(digits=2)
 ```
 
 ## Numbers are bad, make plots
 
 ```{r,fig.height=8,fig.width=12}
-library(reshape2)
-df = rbind.fill(melt(((exp(sapply(sugary,coef)))-1)*100),
-                melt(((exp(sapply(zerocal,coef)))-1)*100))
-names(df) = c('pred','site','coef')
-df$yvar = rep(c('sugary','zerocal'),each=nrow(df)/2)
-ncoef = length(coef(sugary[[1]]))
-df$low = c(((exp(sapply(sugary,confint))-1)*100)[1:ncoef,],
-           ((exp(sapply(zerocal,confint))-1)*100)[1:ncoef,])
-df$high = c(((exp(sapply(sugary,confint))-1)*100)[(ncoef+1):(2*ncoef),],
-            ((exp(sapply(zerocal,confint))-1)*100)[(ncoef+1):(2*ncoef),])
-df = subset(df, grepl('cont',df$pred))
-levels(df$pred) = substring(levels(df$pred), 5)
-ggplot(data=df, aes(color=yvar,y=coef,x=pred))+geom_errorbar(aes(ymax=high,ymin=low))+
-  geom_point(size=2)+facet_wrap(~site)+xlab('treatment')+ylab('% increase in sales')+
-  theme(legend.position='bottom',legend.title=element_blank())
+df = bind_rows("sugary" = sugary_coef, "zerocal" = zerocal_coef, .id='drink_type') %>%
+  pivot_longer(chop:NS) %>% arrange(name)
+ncoef = nrow(sugary_coef)
+df$low = c(rbind(sapply(sugary$mod, confint)[1:ncoef,],
+           sapply(zerocal$mod,confint)[1:ncoef,]))
+df$high = c(rbind(sapply(sugary$mod,confint)[(ncoef+1):(2*ncoef),],
+            sapply(zerocal$mod,confint)[(ncoef+1):(2*ncoef),]))
+df = filter(df, grepl('cont',coef)) %>% mutate(coef = substring(coef, 5)) %>%
+  mutate_if(is.numeric, to_perc)
+ggplot(df, aes(coef, value, color=drink_type)) + 
+  geom_errorbar(aes(ymax=high,ymin=low)) +
+  geom_point(size=2) + facet_wrap(~name) + 
+  xlab('treatment') + ylab('% increase in sales') +
+  scale_color_viridis_d() + theme_cowplot() +
+  theme(legend.position='bottom', legend.title=element_blank())
 ```

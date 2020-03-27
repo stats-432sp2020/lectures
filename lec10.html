@@ -535,6 +535,7 @@ P(Y=y; p) = p^y (1-p)^{1-y} = (x^\top\beta)^y (1-x^\top\beta)^{1-y}
 </div>
 <div id="plotting" class="slide section level2">
 <h1>Plotting</h1>
+<p><strong>For way more fun:</strong> Go to <a href="https://iu-stats-dajmcdon.shinyapps.io/logistic_regression/" class="uri">https://iu-stats-dajmcdon.shinyapps.io/logistic_regression/</a></p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>X &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">runif</span>(<span class="dv">50</span><span class="op">*</span><span class="dv">2</span>, <span class="dt">min=</span><span class="op">-</span><span class="dv">1</span>,<span class="dt">max=</span><span class="dv">1</span>),<span class="dt">ncol=</span><span class="dv">2</span>)</span>
 <span id="cb2-2"><a href="#cb2-2"></a><span class="kw">par</span>(<span class="dt">mfrow=</span><span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">2</span>),<span class="dt">las=</span><span class="dv">1</span>,<span class="dt">bty=</span><span class="st">&#39;n&#39;</span>)</span>
 <span id="cb2-3"><a href="#cb2-3"></a><span class="kw">plot.bilogistic.sim</span>(X,<span class="dt">beta.0=</span><span class="op">-</span><span class="fl">0.1</span>,<span class="dt">beta=</span><span class="kw">c</span>(<span class="op">-</span><span class="fl">0.2</span>,<span class="fl">0.2</span>))</span>
@@ -743,35 +744,34 @@ P(Y=y; p) = p^y (1-p)^{1-y} = (x^\top\beta)^y (1-x^\top\beta)^{1-y}
 <ul>
 <li>What is the model’s predicted probability for a civil war in India in the period beginning 1975?</li>
 </ul>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>india1975 &lt;-<span class="st"> </span>ch[(ch<span class="op">$</span>country<span class="op">==</span><span class="st">&quot;India&quot;</span>) <span class="op">&amp;</span><span class="st"> </span>(ch<span class="op">$</span>year<span class="op">==</span><span class="dv">1975</span>),]</span>
-<span id="cb15-2"><a href="#cb15-2"></a><span class="kw">signif</span>(p.india75 &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch,<span class="dt">type=</span><span class="st">&quot;response&quot;</span>,<span class="dt">newdata=</span>india1975),<span class="dv">3</span>)</span></code></pre></div>
-<pre><code>##  500 
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb15-2"><a href="#cb15-2"></a>india1975 &lt;-<span class="st"> </span><span class="kw">filter</span>(ch,country<span class="op">==</span><span class="st">&quot;India&quot;</span> , year<span class="op">==</span><span class="dv">1975</span>)</span>
+<span id="cb15-3"><a href="#cb15-3"></a><span class="kw">signif</span>(p.india75 &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch, <span class="dt">type=</span><span class="st">&quot;response&quot;</span>, <span class="dt">newdata=</span>india1975), <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##    1 
 ## 0.35</code></pre>
 <ul>
 <li>What probability would it predict for a country just like India in 1975, except that its male secondary school enrollment rate was 30 points higher?</li>
 </ul>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>india1975.sch &lt;-<span class="st"> </span>india1975</span>
-<span id="cb17-2"><a href="#cb17-2"></a>india1975.sch<span class="op">$</span>schooling &lt;-<span class="st"> </span>india1975<span class="op">$</span>schooling<span class="op">+</span><span class="dv">30</span></span>
-<span id="cb17-3"><a href="#cb17-3"></a><span class="kw">signif</span>(p.india75sch &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch,<span class="dt">type=</span><span class="st">&quot;response&quot;</span>,<span class="dt">newdata=</span>india1975.sch),<span class="dv">3</span>)</span></code></pre></div>
-<pre><code>##   500 
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>india1975.sch &lt;-<span class="st"> </span>india1975 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">schooling =</span> schooling <span class="op">+</span><span class="st"> </span><span class="dv">30</span>)</span>
+<span id="cb17-2"><a href="#cb17-2"></a><span class="kw">signif</span>(p.india75sch &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch,<span class="dt">type=</span><span class="st">&quot;response&quot;</span>,<span class="dt">newdata=</span>india1975.sch),<span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##     1 
 ## 0.173</code></pre>
 <ul>
 <li>What probability would it predict for a country just like India in 1975, except that the ratio of commodity exports to GDP was <span class="math inline">\(0.1\)</span> higher?</li>
 </ul>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>india1975.exp &lt;-<span class="st"> </span>india1975</span>
-<span id="cb19-2"><a href="#cb19-2"></a>india1975.exp<span class="op">$</span>exports &lt;-<span class="st"> </span>india1975<span class="op">$</span>exports<span class="fl">+0.1</span></span>
-<span id="cb19-3"><a href="#cb19-3"></a><span class="kw">signif</span>(p.india75exp &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch, <span class="dt">type=</span><span class="st">&quot;response&quot;</span>, <span class="dt">newdata=</span>india1975.exp),<span class="dv">3</span>)</span></code></pre></div>
-<pre><code>##   500 
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>india1975.exp &lt;-<span class="st"> </span>india1975 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">exports =</span> exports <span class="op">+</span><span class="st"> </span><span class="fl">0.1</span>)</span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="kw">signif</span>(p.india75exp &lt;-<span class="st"> </span><span class="kw">predict</span>(lr.ch, <span class="dt">type=</span><span class="st">&quot;response&quot;</span>, <span class="dt">newdata=</span>india1975.exp),<span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##     1 
 ## 0.696</code></pre>
 <p><strong>Note:</strong> No civil war began in India in 1975-1980.</p>
 <ul>
 <li>What about Nigeria in 1965 (code hidden)?</li>
 </ul>
-<pre><code>##   802 
+<pre><code>##     1 
 ## 0.171</code></pre>
-<pre><code>##    802 
+<pre><code>##      1 
 ## 0.0741</code></pre>
-<pre><code>##   802 
+<pre><code>##     1 
 ## 0.331</code></pre>
 <p><strong>Note:</strong> A civil war began in Nigeria in 1967 (the Biafran War)</p>
 </div>
@@ -865,7 +865,7 @@ a)}}-\frac{c}{1+c}
 <div id="gam-confusion" class="slide section level2">
 <h1>GAM confusion</h1>
 <div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a>pred.prob.gam &lt;-<span class="st"> </span><span class="kw">predict</span>(gam.ch, <span class="dt">type=</span><span class="st">&quot;response&quot;</span>)</span>
-<span id="cb34-2"><a href="#cb34-2"></a>(confusion.gam &lt;-<span class="st"> </span><span class="kw">table</span>(ch.clean<span class="op">$</span>start,<span class="kw">as.integer</span>(pred.prob.gam<span class="op">&gt;</span><span class="fl">0.5</span>), <span class="dt">dnn=</span><span class="kw">c</span>(<span class="st">&quot;reality&quot;</span>, <span class="st">&quot;prediction&quot;</span>)))</span></code></pre></div>
+<span id="cb34-2"><a href="#cb34-2"></a>(confusion.gam &lt;-<span class="st"> </span><span class="kw">table</span>(ch.clean<span class="op">$</span>start, <span class="kw">as.integer</span>(pred.prob.gam<span class="op">&gt;</span><span class="fl">0.5</span>), <span class="dt">dnn=</span><span class="kw">c</span>(<span class="st">&quot;reality&quot;</span>, <span class="st">&quot;prediction&quot;</span>)))</span></code></pre></div>
 <pre><code>##        prediction
 ## reality   0   1
 ##       0 638   4
@@ -1057,7 +1057,7 @@ a)}}-\frac{c}{1+c}
 <div id="correct-cv" class="slide section level2">
 <h1>Correct CV</h1>
 <ul>
-<li>Slight adjustment from code in lecture 6</li>
+<li>Slight adjustment from code in lecture 5</li>
 </ul>
 <div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1"></a>cv.mdl &lt;-<span class="st"> </span><span class="cf">function</span>(data, formulae, <span class="dt">fit.function =</span> lm, <span class="dt">family=</span>gaussian, <span class="dt">nfolds =</span> <span class="dv">5</span>) {</span>
 <span id="cb65-2"><a href="#cb65-2"></a>  data &lt;-<span class="st"> </span><span class="kw">na.omit</span>(data)</span>
