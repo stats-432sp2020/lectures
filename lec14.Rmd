@@ -1,12 +1,13 @@
 ---
 title: "Chapter 6 in ISL: Regularization"
 author: "DJM"
-date: "17 April 2018"
+date: "28 April 2020"
 output:
-  pdf_document: default
   slidy_presentation:
-    css: http://mypage.iu.edu/~dajmcdon/teaching/djmRslidy.css
+    css: gfx/djmRslidy.css
     font_adjustment: 0
+    highlight: tango
+  pdf_document: default
 ---
 
 \newcommand{\Expect}[1]{\mathbb{E}\left[ #1 \right]}
@@ -196,18 +197,18 @@ gather(df, key='predictor',value='coefficient',-lambda) %>%
 
 ## Least squares is invariant to rescaling
 
-Let's multiply our design matrix by a factor of 10 to get $\widetilde\X = 10\X$.  
+Let's multiply our design matrix by a factor of 10 to get $\widetilde{\X} = 10\X$.  
 
 Then:
 \[
-\widetilde\beta_{\textrm{ls}} = (\widetilde\X^{\top} \widetilde\X)^{-1} \widetilde\X^{\top} Y = \frac{1}{10}(\widetilde\X^{\top} \widetilde\X)^{-1} \widetilde\X^{\top} Y = 
-\frac{\widehat\beta_{\textrm{ls}}}{10}
+\widetilde{\beta}_{\textrm{ls}} = (\widetilde{\X}^{\top} \widetilde{\X})^{-1} \widetilde{\X}^{\top} Y = \frac{1}{10}(\widetilde{\X}^{\top} \widetilde{\X})^{-1} \widetilde{\X}^{\top} Y = 
+\frac{\widehat{\beta}_{\textrm{ls}}}{10}
 \]
 
 So, multiplying our data by ten just results in our estimates being reduced by one tenth.  
 Hence, any prediction is left unchanged:
 \[
-\widetilde\X\widetilde\beta_{\textrm{ls}} = \X \bls
+\widetilde{\X}\widetilde{\beta}_{\textrm{ls}} = \X \bls
 \]
 
 This means, for instance, if we have a covariate measured in miles, then we will get the "same" answer if we change it to kilometers
@@ -223,7 +224,7 @@ Xtilde   = 2*X
 Ytilde   = Y - mean(Y)
 summary(lm(Y~X))$coefficients
 summary(lm(Y~Xtilde))$coefficients
-summary(lm(Ytilde~Xtilde))$coefficients
+summary(lm(Ytilde~Xtilde))$coefficients # note what happened here!!
 ```
 
 ## Ridge regression (and other regularized methods) is not
@@ -232,10 +233,10 @@ summary(lm(Ytilde~Xtilde))$coefficients
 library(MASS)
 lm.ridge(Y~X, lambda=1)$coef
 lm.ridge(Y~Xtilde, lambda=1)$coef
-lm.ridge(Ytilde~Xtilde, lambda=1)$coef
+lm.ridge(Ytilde~Xtilde, lambda=1)$coef 
 ```
 
-* `lm.ridge` automatically scales every column of $\X$ to have mean zero and Euclidean norm 1.
+* This actually works ok because `lm.ridge` automatically scales every column of $\X$ to have mean zero and Euclidean norm 1.
 
 * It also centers $Y$.
 
@@ -422,7 +423,7 @@ There are two main `R` implementations for finding lasso
 * Setting `alpha=0` gives ridge regression (as does `lm.ridge` in the `MASS` package)
 * Setting `alpha` $\in (0,1)$ gives a method called the "elastic net" which combines ridge regression and lasso.
 * Alternatively, there is  `lars`: `lars.out = lars(X, Y)`
-* `lars` also other things called "Least angle", "forward stepwise", and "forward stagewise" regression
+* `lars` also does other things called "Least angle", "forward stepwise", and "forward stagewise" regression
 
 ## Two packages
 
